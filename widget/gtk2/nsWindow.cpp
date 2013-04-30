@@ -2692,6 +2692,9 @@ nsWindow::OnButtonPressEvent(GdkEventButton *aEvent)
         containerWindow->DispatchActivateEvent();
     }
 
+    // Check if there is a compositing letter.
+    mIMModule->HandleButtonPressEvent();
+
     // check to see if we should rollup
     if (CheckForRollup(aEvent->x_root, aEvent->y_root, false, false))
         return;

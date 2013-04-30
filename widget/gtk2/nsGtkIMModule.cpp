@@ -82,7 +82,8 @@ nsGtkIMModule::nsGtkIMModule(nsWindow* aOwnerWindow) :
     mDummyContext(nullptr),
     mCompositionStart(UINT32_MAX), mProcessingKeyEvent(nullptr),
     mCompositionState(eCompositionState_NotComposing),
-    mIsIMFocused(false), mIgnoreNativeCompositionEvent(false)
+    mIsIMFocused(false), mIgnoreNativeCompositionEvent(false),
+    mPreventNextCompositionCommit(false)
 {
 #ifdef PR_LOGGING
     if (!gGtkIMLog) {
@@ -947,6 +948,13 @@ nsGtkIMModule::OnCommitCompositionNative(GtkIMContext *aContext,
         ("GtkIMModule(%p): OnCommitCompositionNative, aContext=%p, current context=%p, commitString=\"%s\"",
          this, aContext, GetContext(), commitString));
 
+    // If this commit signal fires during a button press event when we are in the middle
+    // of a composition, skip this signal because the composition is already confirmed. 
+    if (mPreventNextCompositionCommit) {
+        mPreventNextCompositionCommit = false;
+        return;
+    }
+
     // See bug 472635, we should do nothing if IM context doesn't match.
     if (GetContext() != aContext) {
         PR_LOG(gGtkIMLog, PR_LOG_ALWAYS,
@@ -1705,4 +1713,15 @@ nsGtkIMModule::ShouldIgnoreNativeCompositionEvent()
     }
 
     return mIgnoreNativeCompositionEvent;
+}
+
+void 
+nsGtkIMModule::HandleButtonPressEvent()
+{
+    nsAutoString compositionString;
+    GetCompositionString(compositionString);
+    if (IsComposing() && !compositionString.IsEmpty()) {
+        mPreventNextCompositionCommit = true;
+        ResetIME();
+    }
 }

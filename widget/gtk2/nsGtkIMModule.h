@@ -95,6 +95,8 @@ public:
     // Otherwise, FALSE.
     static bool IsVirtualKeyboardOpened();
 
+    // Handle the IME context when a button press fires
+    void HandleButtonPressEvent();
 protected:
     // Owner of an instance of this class. This should be top level window.
     // The owner window must release the contexts when it's destroyed because
@@ -195,6 +197,9 @@ protected:
     // another content (nsIContent).  Don't refer this value directly, use
     // ShouldIgnoreNativeCompositionEvent().
     bool mIgnoreNativeCompositionEvent;
+    // When mPreventNextCompositionCommit is TRUE, skip the next commit event 
+    // because the composition is already confirmed.
+    bool mPreventNextCompositionCommit;
     // mKeyDownEventWasSent is used by OnKeyEvent() and
     // DispatchCompositionStart().  DispatchCompositionStart() dispatches
     // a keydown event if the composition start is caused by a native
